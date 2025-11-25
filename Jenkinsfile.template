@@ -1,0 +1,72 @@
+pipeline {
+    agent any
+
+    tools{
+        jdk 'jdk17'
+        maven 'maven3'
+    }
+
+    stages {
+        stage('Code Checkout') {
+            steps {
+                git branch: 'main', changelog: false, poll: false, url: 'https://github.com/AbderrahmaneOd/Spring-Boot-Jenkins-CI-CD'
+            }
+        }
+        
+        stage('OWASP Dependency Check'){
+            steps{
+                dependencyCheck additionalArguments: '--scan ./ --format HTML ', odcInstallation: 'db-check'
+                dependencyCheckPublisher pattern: '**/dependency-check-report.xml'
+            }
+        }
+
+        stage('Sonarqube Analysis') {
+            steps {
+                sh ''' mvn sonar:sonar \
+                    -Dsonar.host.url=http://localhost:9000/ \
+                    -Dsonar.login=YOUR_SONARQUBE_TOKEN_HERE '''
+            }
+        }
+
+        stage('Clean & Package'){
+            steps{
+                sh "mvn clean package -DskipTests"
+            }
+        }
+
+        
+       stage("Docker Build & Push"){
+            steps{
+                script{
+                    withDockerRegistry(credentialsId: 'DockerHub-Token', toolName: 'docker') {
+                        def imageName = "spring-boot-prof-management"
+                        def buildTag = "${imageName}:${BUILD_NUMBER}"
+                        def latestTag = "${imageName}:latest"
+                        def dockerHubUsername = "YOUR_DOCKERHUB_USERNAME_HERE"
+                        
+                        sh "docker build -t ${imageName} -f Dockerfile.final ."
+                        sh "docker tag ${imageName} ${dockerHubUsername}/${buildTag}"
+                        sh "docker tag ${imageName} ${dockerHubUsername}/${latestTag}"
+                        sh "docker push ${dockerHubUsername}/${buildTag}"
+                        sh "docker push ${dockerHubUsername}/${latestTag}"
+                        env.BUILD_TAG = buildTag
+                    }
+                        
+                }
+            }
+        }
+        
+        stage('Vulnerability scanning'){
+            steps{
+                sh " trivy image ${dockerHubUsername}/${buildTag}"
+            }
+        }
+
+        stage("Staging"){
+            steps{
+                sh 'docker-compose up -d'
+            }
+        }
+    }
+}
+

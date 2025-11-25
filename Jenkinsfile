@@ -13,18 +13,19 @@ pipeline {
             }
         }
         
-        stage('OWASP Dependency Check'){
-            steps{
-                dependencyCheck additionalArguments: '--scan ./ --format HTML ', odcInstallation: 'db-check'
-                dependencyCheckPublisher pattern: '**/dependency-check-report.xml'
-            }
-        }
+        // Temporarily disabled - configure Dependency-Check tool first
+        // stage('OWASP Dependency Check'){
+        //     steps{
+        //         dependencyCheck additionalArguments: '--scan ./ --format HTML ', odcInstallation: 'db-check'
+        //         dependencyCheckPublisher pattern: '**/dependency-check-report.xml'
+        //     }
+        // }
 
         stage('Sonarqube Analysis') {
             steps {
                 sh ''' mvn sonar:sonar \
                     -Dsonar.host.url=http://localhost:9000/ \
-                    -Dsonar.login=squ_9bd7c664e4941bd4e7670a88ed93d68af40b42a3 '''
+                    -Dsonar.login=squ_f6ae0f1ae224b08bb01266f9a817e169d24ee0b9 '''
             }
         }
 
@@ -45,10 +46,10 @@ pipeline {
                         def latestTag = "${imageName}:latest"  // Define latest tag
                         
                         sh "docker build -t ${imageName} -f Dockerfile.final ."
-                        sh "docker tag ${imageName} abdeod/${buildTag}"
-                        sh "docker tag ${imageName} abdeod/${latestTag}"  // Tag with latest
-                        sh "docker push abdeod/${buildTag}"
-                        sh "docker push abdeod/${latestTag}"  // Push latest tag
+                        sh "docker tag ${imageName} mubashir2025/${buildTag}"
+                        sh "docker tag ${imageName} mubashir2025/${latestTag}"  // Tag with latest
+                        sh "docker push mubashir2025/${buildTag}"
+                        sh "docker push mubashir2025/${latestTag}"  // Push latest tag
                         env.BUILD_TAG = buildTag
                     }
                         
@@ -58,7 +59,7 @@ pipeline {
         
         stage('Vulnerability scanning'){
             steps{
-                sh " trivy image abdeod/${buildTag}"
+                sh " trivy image mubashir2025/${buildTag}"
             }
         }
 

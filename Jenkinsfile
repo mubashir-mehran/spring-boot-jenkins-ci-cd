@@ -23,7 +23,7 @@ pipeline {
 
         stage('Sonarqube Analysis') {
             steps {
-                sh ''' mvn sonar:sonar \
+                sh ''' mvn clean compile sonar:sonar \
                     -Dsonar.host.url=http://sonarqube:9000/ \
                     -Dsonar.login=squ_f6ae0f1ae224b08bb01266f9a817e169d24ee0b9 '''
             }

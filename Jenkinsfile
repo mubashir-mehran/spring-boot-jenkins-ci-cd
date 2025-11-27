@@ -85,49 +85,73 @@ pipeline {
                         sh "docker tag ${imageName} ${dockerHubRepo}:${BUILD_NUMBER}"
                         sh "docker tag ${imageName} ${dockerHubRepo}:latest"
                         
-                        // Push with retry logic
+                        // Push with retry logic (non-blocking - pipeline continues even if push fails)
                         def maxRetries = 3
-                        def retryCount = 0
-                        def pushSuccess = false
+                        def pushBuildSuccess = false
+                        def pushLatestSuccess = false
                         
-                        while (retryCount < maxRetries && !pushSuccess) {
-                            try {
-                                echo "Attempting to push ${dockerHubRepo}:${BUILD_NUMBER} (attempt ${retryCount + 1}/${maxRetries})"
-                                sh "docker push ${dockerHubRepo}:${BUILD_NUMBER}"
-                                pushSuccess = true
-                                echo "Successfully pushed ${dockerHubRepo}:${BUILD_NUMBER}"
-                            } catch (Exception e) {
-                                retryCount++
-                                if (retryCount < maxRetries) {
-                                    echo "Push failed, retrying in 10 seconds..."
-                                    sleep(10)
-                                } else {
-                                    error("Failed to push Docker image after ${maxRetries} attempts: ${e.getMessage()}")
+                        // Try to push build tag (non-blocking)
+                        try {
+                            def retryCount = 0
+                            while (retryCount < maxRetries && !pushBuildSuccess) {
+                                try {
+                                    echo "Attempting to push ${dockerHubRepo}:${BUILD_NUMBER} (attempt ${retryCount + 1}/${maxRetries})"
+                                    sh "docker push ${dockerHubRepo}:${BUILD_NUMBER}"
+                                    pushBuildSuccess = true
+                                    echo "✓ Successfully pushed ${dockerHubRepo}:${BUILD_NUMBER}"
+                                } catch (Exception e) {
+                                    retryCount++
+                                    if (retryCount < maxRetries) {
+                                        echo "⚠ Push failed, retrying in 10 seconds... (${e.getMessage()})"
+                                        sleep(10)
+                                    } else {
+                                        echo "⚠ WARNING: Failed to push ${dockerHubRepo}:${BUILD_NUMBER} after ${maxRetries} attempts"
+                                        echo "⚠ Error: ${e.getMessage()}"
+                                        echo "⚠ Pipeline will continue despite push failure"
+                                    }
                                 }
                             }
+                        } catch (Exception e) {
+                            echo "⚠ WARNING: Docker push for build tag failed, but continuing pipeline"
+                            echo "⚠ Error: ${e.getMessage()}"
                         }
                         
-                        // Push latest tag
-                        retryCount = 0
-                        pushSuccess = false
-                        while (retryCount < maxRetries && !pushSuccess) {
-                            try {
-                                echo "Attempting to push ${dockerHubRepo}:latest (attempt ${retryCount + 1}/${maxRetries})"
-                                sh "docker push ${dockerHubRepo}:latest"
-                                pushSuccess = true
-                                echo "Successfully pushed ${dockerHubRepo}:latest"
-                            } catch (Exception e) {
-                                retryCount++
-                                if (retryCount < maxRetries) {
-                                    echo "Push failed, retrying in 10 seconds..."
-                                    sleep(10)
-                                } else {
-                                    error("Failed to push Docker image latest tag after ${maxRetries} attempts: ${e.getMessage()}")
+                        // Try to push latest tag (non-blocking)
+                        try {
+                            def retryCount = 0
+                            while (retryCount < maxRetries && !pushLatestSuccess) {
+                                try {
+                                    echo "Attempting to push ${dockerHubRepo}:latest (attempt ${retryCount + 1}/${maxRetries})"
+                                    sh "docker push ${dockerHubRepo}:latest"
+                                    pushLatestSuccess = true
+                                    echo "✓ Successfully pushed ${dockerHubRepo}:latest"
+                                } catch (Exception e) {
+                                    retryCount++
+                                    if (retryCount < maxRetries) {
+                                        echo "⚠ Push failed, retrying in 10 seconds... (${e.getMessage()})"
+                                        sleep(10)
+                                    } else {
+                                        echo "⚠ WARNING: Failed to push ${dockerHubRepo}:latest after ${maxRetries} attempts"
+                                        echo "⚠ Error: ${e.getMessage()}"
+                                        echo "⚠ Pipeline will continue despite push failure"
+                                    }
                                 }
                             }
+                        } catch (Exception e) {
+                            echo "⚠ WARNING: Docker push for latest tag failed, but continuing pipeline"
+                            echo "⚠ Error: ${e.getMessage()}"
                         }
                         
+                        // Set build tag regardless of push success
                         env.BUILD_TAG = "${dockerHubRepo}:${BUILD_NUMBER}"
+                        
+                        // Summary
+                        if (pushBuildSuccess && pushLatestSuccess) {
+                            echo "✓ Docker push completed successfully"
+                        } else {
+                            echo "⚠ WARNING: Docker push had failures, but pipeline continues"
+                            currentBuild.result = 'UNSTABLE'
+                        }
                     }
                 }
             }

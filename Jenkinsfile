@@ -14,10 +14,12 @@ pipeline {
         stage('Verify Workspace') {
             steps {
                 script {
-                    // Verify we're in the workspace and git is initialized
+                    // Fix Git ownership issue and verify workspace
                     sh '''
                         pwd
-                        ls -la
+                        # Fix Git dubious ownership warning
+                        git config --global --add safe.directory $(pwd) || true
+                        # Verify we're in the workspace and git is initialized
                         if [ ! -d .git ]; then
                             echo "Git directory not found, this should not happen with Pipeline script from SCM"
                             exit 1

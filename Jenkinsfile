@@ -61,18 +61,74 @@ pipeline {
                     withCredentials([usernamePassword(credentialsId: 'dckr_pat_Rgo0rM8UVvrQCJKNhL4Yvfx1PzY', usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
                         def imageName = "spring-boot-prof-management"
                         def buildTag = "${imageName}:${BUILD_NUMBER}"
-                        def latestTag = "${imageName}:latest"  // Define latest tag
+                        def latestTag = "${imageName}:latest"
+                        def dockerHubRepo = "mubashir2025/${imageName}"
                         
                         // Docker Hub login using username and token
-                        sh "docker login -u ${DOCKER_USER} -p ${DOCKER_PASS}"
-                        sh "docker build -t ${imageName} -f Dockerfile.final ."
-                        sh "docker tag ${imageName} mubashir2025/${buildTag}"
-                        sh "docker tag ${imageName} mubashir2025/${latestTag}"  // Tag with latest
-                        sh "docker push mubashir2025/${buildTag}"
-                        sh "docker push mubashir2025/${latestTag}"  // Push latest tag
-                        env.BUILD_TAG = buildTag
-                    }
+                        sh """
+                            echo "Logging into Docker Hub..."
+                            echo '${DOCKER_PASS}' | docker login -u '${DOCKER_USER}' --password-stdin
+                            echo "Verifying Docker Hub connection..."
+                            docker info
+                        """
                         
+                        // Build Docker image
+                        sh "docker build -t ${imageName} -f Dockerfile.final ."
+                        
+                        // Check image size
+                        sh """
+                            echo "Docker image size:"
+                            docker images ${imageName} --format "{{.Size}}"
+                        """
+                        
+                        // Tag images
+                        sh "docker tag ${imageName} ${dockerHubRepo}:${BUILD_NUMBER}"
+                        sh "docker tag ${imageName} ${dockerHubRepo}:latest"
+                        
+                        // Push with retry logic
+                        def maxRetries = 3
+                        def retryCount = 0
+                        def pushSuccess = false
+                        
+                        while (retryCount < maxRetries && !pushSuccess) {
+                            try {
+                                echo "Attempting to push ${dockerHubRepo}:${BUILD_NUMBER} (attempt ${retryCount + 1}/${maxRetries})"
+                                sh "docker push ${dockerHubRepo}:${BUILD_NUMBER}"
+                                pushSuccess = true
+                                echo "Successfully pushed ${dockerHubRepo}:${BUILD_NUMBER}"
+                            } catch (Exception e) {
+                                retryCount++
+                                if (retryCount < maxRetries) {
+                                    echo "Push failed, retrying in 10 seconds..."
+                                    sleep(10)
+                                } else {
+                                    error("Failed to push Docker image after ${maxRetries} attempts: ${e.getMessage()}")
+                                }
+                            }
+                        }
+                        
+                        // Push latest tag
+                        retryCount = 0
+                        pushSuccess = false
+                        while (retryCount < maxRetries && !pushSuccess) {
+                            try {
+                                echo "Attempting to push ${dockerHubRepo}:latest (attempt ${retryCount + 1}/${maxRetries})"
+                                sh "docker push ${dockerHubRepo}:latest"
+                                pushSuccess = true
+                                echo "Successfully pushed ${dockerHubRepo}:latest"
+                            } catch (Exception e) {
+                                retryCount++
+                                if (retryCount < maxRetries) {
+                                    echo "Push failed, retrying in 10 seconds..."
+                                    sleep(10)
+                                } else {
+                                    error("Failed to push Docker image latest tag after ${maxRetries} attempts: ${e.getMessage()}")
+                                }
+                            }
+                        }
+                        
+                        env.BUILD_TAG = "${dockerHubRepo}:${BUILD_NUMBER}"
+                    }
                 }
             }
         }

@@ -2,8 +2,11 @@ version: '3.8'
 
 services:
   jenkins:
-    image: jenkins/jenkins:lts
+    build:
+      context: .
+      dockerfile: Dockerfile.jenkins
     container_name: jenkins
+    user: root  # Run as root to access Docker socket
     ports:
       - "8081:8080"
       - "50000:50000"

@@ -64,7 +64,8 @@ pipeline {
             steps{
                 script {
                     def buildTag = "spring-boot-prof-management:${BUILD_NUMBER}"
-                    sh "trivy image mubashir2025/${buildTag}"
+                    // Use Trivy via Docker since it's not installed in Jenkins container
+                    sh "docker run --rm -v /var/run/docker.sock:/var/run/docker.sock aquasec/trivy:latest image mubashir2025/${buildTag}"
                 }
             }
         }

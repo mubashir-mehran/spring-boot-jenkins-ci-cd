@@ -1,6 +1,10 @@
 pipeline {
     agent any
 
+    options {
+        skipDefaultCheckout(false)  // Use automatic SCM checkout
+    }
+
     tools{
         jdk 'jdk17'
         maven 'maven3'
@@ -9,7 +13,22 @@ pipeline {
     stages {
         stage('Code Checkout') {
             steps {
-                git branch: 'main', changelog: false, poll: false, url: 'https://github.com/mubashir-mehran/spring-boot-jenkins-ci-cd'
+                script {
+                    // Verify we're in a git repo, if not, checkout
+                    def isGitRepo = sh(script: 'git rev-parse --git-dir > /dev/null 2>&1', returnStatus: true) == 0
+                    if (!isGitRepo) {
+                        checkout([
+                            $class: 'GitSCM',
+                            branches: [[name: '*/main']],
+                            doGenerateSubmoduleConfigurations: false,
+                            extensions: [],
+                            submoduleCfg: [],
+                            userRemoteConfigs: [[url: 'https://github.com/mubashir-mehran/spring-boot-jenkins-ci-cd']]
+                        ])
+                    } else {
+                        sh 'git fetch origin && git reset --hard origin/main'
+                    }
+                }
             }
         }
         
@@ -64,7 +83,8 @@ pipeline {
             steps{
                 script {
                     def buildTag = "spring-boot-prof-management:${BUILD_NUMBER}"
-                    sh "trivy image mubashir2025/${buildTag}"
+                    // Use Trivy via Docker since it's not installed in Jenkins container
+                    sh "docker run --rm -v /var/run/docker.sock:/var/run/docker.sock aquasec/trivy:latest image mubashir2025/${buildTag}"
                 }
             }
         }

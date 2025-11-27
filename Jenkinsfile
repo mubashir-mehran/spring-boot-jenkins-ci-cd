@@ -25,7 +25,7 @@ pipeline {
             steps {
                 sh ''' mvn clean compile sonar:sonar \
                     -Dsonar.host.url=http://sonarqube:9000/ \
-                    -Dsonar.login=squ_f6ae0f1ae224b08bb01266f9a817e169d24ee0b9 '''
+                    -Dsonar.login=squ_e1220c80b300dc3eefd296a5d0cb3fd9aaca2edf '''
             }
         }
 

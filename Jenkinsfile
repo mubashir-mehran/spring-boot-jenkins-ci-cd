@@ -40,11 +40,12 @@ pipeline {
        stage("Docker Build & Push"){
             steps{
                 script{
-                    withDockerRegistry(credentialsId: 'DockerHub-Token', toolName: 'docker') {
+                    withCredentials([usernamePassword(credentialsId: 'DockerHub-Token', usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
                         def imageName = "spring-boot-prof-management"
                         def buildTag = "${imageName}:${BUILD_NUMBER}"
                         def latestTag = "${imageName}:latest"  // Define latest tag
                         
+                        sh "docker login -u ${DOCKER_USER} -p ${DOCKER_PASS}"
                         sh "docker build -t ${imageName} -f Dockerfile.final ."
                         sh "docker tag ${imageName} mubashir2025/${buildTag}"
                         sh "docker tag ${imageName} mubashir2025/${latestTag}"  // Tag with latest
@@ -59,7 +60,10 @@ pipeline {
         
         stage('Vulnerability scanning'){
             steps{
-                sh " trivy image mubashir2025/${buildTag}"
+                script {
+                    def buildTag = "spring-boot-prof-management:${BUILD_NUMBER}"
+                    sh "trivy image mubashir2025/${buildTag}"
+                }
             }
         }
 

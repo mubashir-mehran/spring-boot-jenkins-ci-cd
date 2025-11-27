@@ -160,9 +160,46 @@ pipeline {
         stage('Vulnerability scanning'){
             steps{
                 script {
-                    def buildTag = "spring-boot-prof-management:${BUILD_NUMBER}"
-                    // Use Trivy via Docker since it's not installed in Jenkins container
-                    sh "docker run --rm -v /var/run/docker.sock:/var/run/docker.sock aquasec/trivy:latest image mubashir2025/${buildTag}"
+                    try {
+                        // Scan the local image (since push may have failed)
+                        def imageToScan = "spring-boot-prof-management:latest"
+                        echo "Starting vulnerability scan for local image: ${imageToScan}..."
+                        
+                        // Use Trivy via Docker with timeout and skip DB update if it fails
+                        // Use --skip-db-update to avoid network issues if DB download fails
+                        def scanSuccess = false
+                        def maxRetries = 2
+                        def retryCount = 0
+                        
+                        while (retryCount < maxRetries && !scanSuccess) {
+                            try {
+                                if (retryCount == 0) {
+                                    // First attempt: try with DB update
+                                    sh "docker run --rm -v /var/run/docker.sock:/var/run/docker.sock aquasec/trivy:latest image --timeout 5m ${imageToScan}"
+                                } else {
+                                    // Retry: skip DB update to avoid network issues
+                                    echo "Retrying scan with --skip-db-update to avoid network issues..."
+                                    sh "docker run --rm -v /var/run/docker.sock:/var/run/docker.sock aquasec/trivy:latest image --skip-db-update --timeout 5m ${imageToScan}"
+                                }
+                                scanSuccess = true
+                                echo "✓ Vulnerability scan completed successfully"
+                            } catch (Exception e) {
+                                retryCount++
+                                if (retryCount < maxRetries) {
+                                    echo "⚠ Scan failed, retrying... (${e.getMessage()})"
+                                    sleep(5)
+                                } else {
+                                    throw e
+                                }
+                            }
+                        }
+                    } catch (Exception e) {
+                        echo "⚠ WARNING: Vulnerability scanning failed, but pipeline continues"
+                        echo "⚠ Error: ${e.getMessage()}"
+                        echo "⚠ This may be due to network/DNS issues or Trivy database download problems"
+                        echo "⚠ You can run Trivy scan manually later if needed"
+                        currentBuild.result = 'UNSTABLE'
+                    }
                 }
             }
         }

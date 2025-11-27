@@ -2,7 +2,7 @@ pipeline {
     agent any
 
     options {
-        skipDefaultCheckout(false)  // Use automatic SCM checkout
+        skipDefaultCheckout(true)  // Skip automatic checkout - code is already checked out by "Pipeline script from SCM"
     }
 
     tools{
@@ -11,23 +11,19 @@ pipeline {
     }
 
     stages {
-        stage('Code Checkout') {
+        stage('Verify Workspace') {
             steps {
                 script {
-                    // Verify we're in a git repo, if not, checkout
-                    def isGitRepo = sh(script: 'git rev-parse --git-dir > /dev/null 2>&1', returnStatus: true) == 0
-                    if (!isGitRepo) {
-                        checkout([
-                            $class: 'GitSCM',
-                            branches: [[name: '*/main']],
-                            doGenerateSubmoduleConfigurations: false,
-                            extensions: [],
-                            submoduleCfg: [],
-                            userRemoteConfigs: [[url: 'https://github.com/mubashir-mehran/spring-boot-jenkins-ci-cd']]
-                        ])
-                    } else {
-                        sh 'git fetch origin && git reset --hard origin/main'
-                    }
+                    // Verify we're in the workspace and git is initialized
+                    sh '''
+                        pwd
+                        ls -la
+                        if [ ! -d .git ]; then
+                            echo "Git directory not found, this should not happen with Pipeline script from SCM"
+                            exit 1
+                        fi
+                        git status
+                    '''
                 }
             }
         }

@@ -54,13 +54,8 @@ pipeline {
                 always {
                     // Archive test results
                     junit 'target/surefire-reports/*.xml'
-                    // Archive coverage reports
-                    publishHTML([
-                        reportDir: 'target/site/jacoco',
-                        reportFiles: 'index.html',
-                        reportName: 'JaCoCo Coverage Report',
-                        keepAll: true
-                    ])
+                    // Archive coverage reports (HTML Publisher plugin not installed, so we'll just archive the files)
+                    archiveArtifacts artifacts: 'target/site/jacoco/**/*', allowEmptyArchive: true
                 }
             }
         }

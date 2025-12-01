@@ -38,17 +38,50 @@ pipeline {
         //     }
         // }
 
-        stage('Sonarqube Analysis') {
+        stage('Test & Coverage') {
             steps {
-                sh ''' mvn clean compile sonar:sonar \
-                    -Dsonar.host.url=http://sonarqube:9000/ \
-                    -Dsonar.login=squ_e1220c80b300dc3eefd296a5d0cb3fd9aaca2edf '''
+                sh '''
+                    echo "Running tests with JaCoCo coverage..."
+                    mvn clean test
+                    echo "Generating JaCoCo coverage report..."
+                    mvn jacoco:report
+                    echo "Coverage report generated at: target/site/jacoco/index.html"
+                    echo "Coverage exec file: target/jacoco.exec"
+                    echo "Coverage XML report: target/site/jacoco/jacoco.xml"
+                '''
+            }
+            post {
+                always {
+                    // Archive test results
+                    junit 'target/surefire-reports/*.xml'
+                    // Archive coverage reports
+                    publishHTML([
+                        reportDir: 'target/site/jacoco',
+                        reportFiles: 'index.html',
+                        reportName: 'JaCoCo Coverage Report',
+                        keepAll: true
+                    ])
+                }
             }
         }
 
-        stage('Clean & Package'){
+        stage('Sonarqube Analysis') {
+            steps {
+                sh ''' 
+                    echo "Running SonarQube analysis with coverage data..."
+                    mvn sonar:sonar \
+                        -Dsonar.host.url=http://sonarqube:9000/ \
+                        -Dsonar.login=squ_e1220c80b300dc3eefd296a5d0cb3fd9aaca2edf \
+                        -Dsonar.jacoco.reportPath=target/jacoco.exec \
+                        -Dsonar.coverage.jacoco.xmlReportPaths=target/site/jacoco/jacoco.xml
+                    echo "SonarQube analysis completed"
+                '''
+            }
+        }
+
+        stage('Package'){
             steps{
-                sh "mvn clean package -DskipTests"
+                sh "mvn package -DskipTests"
             }
         }
 

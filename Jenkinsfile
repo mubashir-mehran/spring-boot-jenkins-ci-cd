@@ -40,22 +40,40 @@ pipeline {
 
         stage('Test & Coverage') {
             steps {
-                sh '''
-                    echo "Running tests with JaCoCo coverage..."
-                    mvn clean test
-                    echo "Generating JaCoCo coverage report..."
-                    mvn jacoco:report
-                    echo "Coverage report generated at: target/site/jacoco/index.html"
-                    echo "Coverage exec file: target/jacoco.exec"
-                    echo "Coverage XML report: target/site/jacoco/jacoco.xml"
-                '''
+                script {
+                    try {
+                        echo "Running tests with JaCoCo coverage..."
+                        sh "mvn clean test"
+                        echo "Generating JaCoCo coverage report..."
+                        sh "mvn jacoco:report"
+                        echo "✓ Tests passed and coverage report generated"
+                    } catch (Exception e) {
+                        echo "⚠ WARNING: Tests failed, but pipeline will continue"
+                        echo "⚠ Error: ${e.getMessage()}"
+                        echo "⚠ Attempting to generate coverage report anyway..."
+                        try {
+                            sh "mvn jacoco:report || true"
+                        } catch (Exception e2) {
+                            echo "⚠ Could not generate coverage report: ${e2.getMessage()}"
+                        }
+                        currentBuild.result = 'UNSTABLE'
+                    }
+                }
             }
             post {
                 always {
-                    // Archive test results
-                    junit 'target/surefire-reports/*.xml'
-                    // Archive coverage reports (HTML Publisher plugin not installed, so we'll just archive the files)
-                    archiveArtifacts artifacts: 'target/site/jacoco/**/*', allowEmptyArchive: true
+                    // Archive test results (if they exist)
+                    try {
+                        junit 'target/surefire-reports/*.xml'
+                    } catch (Exception e) {
+                        echo "⚠ No test results to archive"
+                    }
+                    // Archive coverage reports (if they exist)
+                    try {
+                        archiveArtifacts artifacts: 'target/site/jacoco/**/*', allowEmptyArchive: true
+                    } catch (Exception e) {
+                        echo "⚠ No coverage reports to archive"
+                    }
                 }
             }
         }

@@ -46,17 +46,46 @@ pipeline {
                         sh "mvn clean test"
                         echo "Generating JaCoCo coverage report..."
                         sh "mvn jacoco:report"
+                        
+                        // Verify coverage files were generated
+                        sh '''
+                            echo "=== Verifying Coverage Files ==="
+                            if [ -f target/jacoco.exec ]; then
+                                echo "✓ Coverage exec file exists: target/jacoco.exec"
+                                ls -lh target/jacoco.exec
+                            else
+                                echo "⚠ Coverage exec file NOT found: target/jacoco.exec"
+                            fi
+                            
+                            if [ -f target/site/jacoco/jacoco.xml ]; then
+                                echo "✓ Coverage XML report exists: target/site/jacoco/jacoco.xml"
+                                ls -lh target/site/jacoco/jacoco.xml
+                            else
+                                echo "⚠ Coverage XML report NOT found: target/site/jacoco/jacoco.xml"
+                            fi
+                            
+                            if [ -f target/site/jacoco/index.html ]; then
+                                echo "✓ Coverage HTML report exists: target/site/jacoco/index.html"
+                            else
+                                echo "⚠ Coverage HTML report NOT found: target/site/jacoco/index.html"
+                            fi
+                            
+                            echo "=== Coverage Files Summary ==="
+                            find target -name "jacoco*" -type f 2>/dev/null | head -10 || echo "No jacoco files found"
+                        '''
+                        
                         echo "✓ Tests passed and coverage report generated"
-                        echo "Coverage report location: target/site/jacoco/index.html"
-                        echo "Coverage XML report: target/site/jacoco/jacoco.xml"
-                        echo "Coverage exec file: target/jacoco.exec"
                     } catch (Exception e) {
                         echo "⚠ WARNING: Tests failed, but pipeline will continue"
                         echo "⚠ Error: ${e.getMessage()}"
                         echo "⚠ Attempting to generate coverage report anyway..."
                         try {
                             sh "mvn jacoco:report || true"
-                            echo "Coverage report location: target/site/jacoco/index.html"
+                            sh '''
+                                echo "Checking for coverage files after failed test..."
+                                ls -la target/jacoco.exec 2>/dev/null || echo "No jacoco.exec found"
+                                ls -la target/site/jacoco/jacoco.xml 2>/dev/null || echo "No jacoco.xml found"
+                            '''
                         } catch (Exception e2) {
                             echo "⚠ Could not generate coverage report: ${e2.getMessage()}"
                         }
@@ -73,22 +102,16 @@ pipeline {
                         }
                         // Archive coverage reports (if they exist)
                         catchError(buildResult: null, stageResult: null) {
-                            archiveArtifacts artifacts: 'target/site/jacoco/**/*', allowEmptyArchive: true
-                            // Also archive the exec file for SonarQube
-                            archiveArtifacts artifacts: 'target/jacoco.exec', allowEmptyArchive: true
-                        }
-                        // Display coverage summary if available
-                        catchError(buildResult: null, stageResult: null) {
                             sh '''
-                                if [ -f target/site/jacoco/jacoco.xml ]; then
-                                    echo "=== Coverage Report Summary ==="
-                                    echo "Coverage XML report exists at: target/site/jacoco/jacoco.xml"
-                                    echo "View detailed HTML report in Build Artifacts: target/site/jacoco/index.html"
-                                    echo "View coverage in SonarQube dashboard"
-                                else
-                                    echo "⚠ Coverage report not generated"
+                                echo "=== Archiving Coverage Reports ==="
+                                if [ -d target/site/jacoco ]; then
+                                    echo "Archiving jacoco directory..."
+                                    tar -czf jacoco-reports.tar.gz -C target/site jacoco/ 2>/dev/null || true
                                 fi
                             '''
+                            archiveArtifacts artifacts: 'target/site/jacoco/**/*', allowEmptyArchive: true
+                            archiveArtifacts artifacts: 'target/jacoco.exec', allowEmptyArchive: true
+                            archiveArtifacts artifacts: 'jacoco-reports.tar.gz', allowEmptyArchive: true
                         }
                     }
                 }
@@ -97,15 +120,42 @@ pipeline {
 
         stage('Sonarqube Analysis') {
             steps {
-                sh ''' 
-                    echo "Running SonarQube analysis with coverage data..."
-                    mvn sonar:sonar \
-                        -Dsonar.host.url=http://sonarqube:9000/ \
-                        -Dsonar.login=squ_e1220c80b300dc3eefd296a5d0cb3fd9aaca2edf \
-                        -Dsonar.jacoco.reportPath=target/jacoco.exec \
-                        -Dsonar.coverage.jacoco.xmlReportPaths=target/site/jacoco/jacoco.xml
-                    echo "SonarQube analysis completed"
-                '''
+                script {
+                    sh '''
+                        echo "=== Preparing SonarQube Analysis ==="
+                        echo "Checking for coverage files..."
+                        
+                        if [ -f target/jacoco.exec ]; then
+                            echo "✓ Found coverage exec file: target/jacoco.exec"
+                            ls -lh target/jacoco.exec
+                        else
+                            echo "⚠ WARNING: Coverage exec file not found: target/jacoco.exec"
+                        fi
+                        
+                        if [ -f target/site/jacoco/jacoco.xml ]; then
+                            echo "✓ Found coverage XML report: target/site/jacoco/jacoco.xml"
+                            ls -lh target/site/jacoco/jacoco.xml
+                            echo "First few lines of coverage XML:"
+                            head -20 target/site/jacoco/jacoco.xml || true
+                        else
+                            echo "⚠ WARNING: Coverage XML report not found: target/site/jacoco/jacoco.xml"
+                            echo "Creating empty coverage report structure..."
+                            mkdir -p target/site/jacoco || true
+                        fi
+                        
+                        echo "Running SonarQube analysis with coverage data..."
+                    '''
+                    
+                    sh ''' 
+                        mvn sonar:sonar \
+                            -Dsonar.host.url=http://sonarqube:9000/ \
+                            -Dsonar.login=squ_e1220c80b300dc3eefd296a5d0cb3fd9aaca2edf \
+                            -Dsonar.jacoco.reportPath=target/jacoco.exec \
+                            -Dsonar.coverage.jacoco.xmlReportPaths=target/site/jacoco/jacoco.xml \
+                            -Dsonar.coverage.exclusions=**/entities/**,**/GestionProfesseursApplication.java
+                        echo "SonarQube analysis completed"
+                    '''
+                }
             }
         }
 

@@ -62,17 +62,15 @@ pipeline {
             }
             post {
                 always {
-                    // Archive test results (if they exist)
-                    try {
-                        junit 'target/surefire-reports/*.xml'
-                    } catch (Exception e) {
-                        echo "⚠ No test results to archive"
-                    }
-                    // Archive coverage reports (if they exist)
-                    try {
-                        archiveArtifacts artifacts: 'target/site/jacoco/**/*', allowEmptyArchive: true
-                    } catch (Exception e) {
-                        echo "⚠ No coverage reports to archive"
+                    script {
+                        // Archive test results (if they exist)
+                        catchError(buildResult: null, stageResult: null) {
+                            junit 'target/surefire-reports/*.xml'
+                        }
+                        // Archive coverage reports (if they exist)
+                        catchError(buildResult: null, stageResult: null) {
+                            archiveArtifacts artifacts: 'target/site/jacoco/**/*', allowEmptyArchive: true
+                        }
                     }
                 }
             }

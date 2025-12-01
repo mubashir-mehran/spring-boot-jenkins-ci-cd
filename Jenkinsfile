@@ -47,12 +47,16 @@ pipeline {
                         echo "Generating JaCoCo coverage report..."
                         sh "mvn jacoco:report"
                         echo "✓ Tests passed and coverage report generated"
+                        echo "Coverage report location: target/site/jacoco/index.html"
+                        echo "Coverage XML report: target/site/jacoco/jacoco.xml"
+                        echo "Coverage exec file: target/jacoco.exec"
                     } catch (Exception e) {
                         echo "⚠ WARNING: Tests failed, but pipeline will continue"
                         echo "⚠ Error: ${e.getMessage()}"
                         echo "⚠ Attempting to generate coverage report anyway..."
                         try {
                             sh "mvn jacoco:report || true"
+                            echo "Coverage report location: target/site/jacoco/index.html"
                         } catch (Exception e2) {
                             echo "⚠ Could not generate coverage report: ${e2.getMessage()}"
                         }
@@ -70,6 +74,21 @@ pipeline {
                         // Archive coverage reports (if they exist)
                         catchError(buildResult: null, stageResult: null) {
                             archiveArtifacts artifacts: 'target/site/jacoco/**/*', allowEmptyArchive: true
+                            // Also archive the exec file for SonarQube
+                            archiveArtifacts artifacts: 'target/jacoco.exec', allowEmptyArchive: true
+                        }
+                        // Display coverage summary if available
+                        catchError(buildResult: null, stageResult: null) {
+                            sh '''
+                                if [ -f target/site/jacoco/jacoco.xml ]; then
+                                    echo "=== Coverage Report Summary ==="
+                                    echo "Coverage XML report exists at: target/site/jacoco/jacoco.xml"
+                                    echo "View detailed HTML report in Build Artifacts: target/site/jacoco/index.html"
+                                    echo "View coverage in SonarQube dashboard"
+                                else
+                                    echo "⚠ Coverage report not generated"
+                                fi
+                            '''
                         }
                     }
                 }

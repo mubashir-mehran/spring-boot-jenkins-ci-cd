@@ -43,7 +43,14 @@ pipeline {
                 script {
                     try {
                         echo "Running tests with JaCoCo coverage..."
-                        sh "mvn clean test"
+                        sh '''
+                            mvn clean test 2>&1 | tee test-output.log || {
+                                echo "=== TEST EXECUTION FAILED ==="
+                                echo "Last 100 lines of test output:"
+                                tail -100 test-output.log || echo "Could not read test output"
+                                exit 1
+                            }
+                        '''
                         echo "Generating JaCoCo coverage report..."
                         sh "mvn jacoco:report"
                         

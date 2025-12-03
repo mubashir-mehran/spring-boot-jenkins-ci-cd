@@ -44,12 +44,31 @@ pipeline {
                     try {
                         echo "Running tests with JaCoCo coverage..."
                         sh '''
+                            echo "=== Checking test files exist ==="
+                            find src/test/java -name "*Test.java" -type f | sort
+                            echo "Total test files found: $(find src/test/java -name "*Test.java" -type f | wc -l)"
+                            
+                            echo "=== Checking Maven configuration ==="
+                            mvn help:evaluate -Dexpression=project.build.plugins -q -DforceStdout | grep -i "surefire\|jacoco" || true
+                            
+                            echo "=== Running tests ==="
                             mvn clean test 2>&1 | tee test-output.log || {
                                 echo "=== TEST EXECUTION FAILED ==="
                                 echo "Last 100 lines of test output:"
                                 tail -100 test-output.log || echo "Could not read test output"
                                 exit 1
                             }
+                            
+                            echo "=== Checking test compilation ==="
+                            echo "Test classes compiled:"
+                            find target/test-classes -name "*Test.class" -type f | wc -l
+                            find target/test-classes -name "*Test.class" -type f | sort
+                            
+                            echo "=== Checking for JaCoCo agent in test output ==="
+                            grep -i "argLine\|javaagent\|jacoco" test-output.log | head -5 || echo "No JaCoCo agent found in output"
+                            
+                            echo "=== Test execution summary ==="
+                            grep -E "Tests run:|BUILD" test-output.log | tail -5
                         '''
                         echo "Generating JaCoCo coverage report..."
                         sh "mvn jacoco:report"

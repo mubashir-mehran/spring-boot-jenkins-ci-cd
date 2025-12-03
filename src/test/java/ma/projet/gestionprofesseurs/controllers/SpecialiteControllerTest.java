@@ -109,7 +109,7 @@ class SpecialiteControllerTest {
     @Test
     void testDeleteSpecialite() {
         when(specialiteService.findById(1)).thenReturn(specialite);
-        doNothing().when(specialiteService).delete(specialite);
+        when(specialiteService.delete(specialite)).thenReturn(true);
 
         ResponseEntity<Object> response = specialiteController.deleteSpecialite(1);
 
@@ -130,6 +130,7 @@ class SpecialiteControllerTest {
         verify(specialiteService, never()).delete(any());
     }
 }
+
 
 
 

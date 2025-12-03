@@ -125,7 +125,7 @@ class ProfesseurControllerTest {
     @Test
     void testDeleteProfesseur() {
         when(professeurService.findById(1)).thenReturn(professeur);
-        doNothing().when(professeurService).delete(professeur);
+        when(professeurService.delete(professeur)).thenReturn(true);
 
         ResponseEntity<Object> response = professeurController.deleteProfesseur(1);
 
@@ -174,6 +174,7 @@ class ProfesseurControllerTest {
         verify(professeurService, times(1)).findByDateEmbaucheBetween(dateDebut, dateFin);
     }
 }
+
 
 
 

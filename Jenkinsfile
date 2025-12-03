@@ -155,7 +155,7 @@ pipeline {
                     
                     sh ''' 
                         mvn sonar:sonar \
-                            -Dsonar.host.url=http://sonarqube:9000/ \
+                    -Dsonar.host.url=http://sonarqube:9000/ \
                             -Dsonar.login=squ_e1220c80b300dc3eefd296a5d0cb3fd9aaca2edf \
                             -Dsonar.jacoco.reportPath=target/jacoco.exec \
                             -Dsonar.coverage.jacoco.xmlReportPaths=target/site/jacoco/jacoco.xml \

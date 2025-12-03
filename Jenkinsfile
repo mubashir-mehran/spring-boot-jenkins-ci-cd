@@ -65,7 +65,7 @@ pipeline {
                             find target/test-classes -name "*Test.class" -type f | sort
                             
                             echo "=== Checking for JaCoCo agent in test output ==="
-                            grep -i "argLine\|javaagent\|jacoco" test-output.log | head -5 || echo "No JaCoCo agent found in output"
+                            grep -iE "argLine|javaagent|jacoco" test-output.log | head -5 || echo "No JaCoCo agent found in output"
                             
                             echo "=== Test execution summary ==="
                             grep -E "Tests run:|BUILD" test-output.log | tail -5

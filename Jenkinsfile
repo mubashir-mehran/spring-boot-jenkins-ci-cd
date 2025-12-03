@@ -49,7 +49,7 @@ pipeline {
                             echo "Total test files found: $(find src/test/java -name "*Test.java" -type f | wc -l)"
                             
                             echo "=== Checking Maven configuration ==="
-                            mvn help:evaluate -Dexpression=project.build.plugins -q -DforceStdout | grep -i "surefire\|jacoco" || true
+                            mvn help:evaluate -Dexpression=project.build.plugins -q -DforceStdout | grep -iE "surefire|jacoco" || true
                             
                             echo "=== Running tests ==="
                             mvn clean test 2>&1 | tee test-output.log || {

@@ -79,6 +79,12 @@ pipeline {
                             if [ -f target/jacoco.exec ]; then
                                 echo "✓ Coverage exec file exists: target/jacoco.exec"
                                 ls -lh target/jacoco.exec
+                                echo "File size: $(stat -f%z target/jacoco.exec 2>/dev/null || stat -c%s target/jacoco.exec 2>/dev/null || echo 'unknown') bytes"
+                                if [ -s target/jacoco.exec ]; then
+                                    echo "✓ Coverage exec file is NOT empty (has coverage data)"
+                                else
+                                    echo "⚠ WARNING: Coverage exec file is EMPTY (no coverage data collected)"
+                                fi
                             else
                                 echo "⚠ Coverage exec file NOT found: target/jacoco.exec"
                             fi
@@ -86,6 +92,16 @@ pipeline {
                             if [ -f target/site/jacoco/jacoco.xml ]; then
                                 echo "✓ Coverage XML report exists: target/site/jacoco/jacoco.xml"
                                 ls -lh target/site/jacoco/jacoco.xml
+                                echo "Checking coverage data in XML..."
+                                if grep -q "covered=\"[1-9]" target/site/jacoco/jacoco.xml 2>/dev/null; then
+                                    echo "✓ Coverage XML contains coverage data (found covered > 0)"
+                                    echo "Sample coverage data:"
+                                    grep -o "covered=\"[0-9]*\"" target/site/jacoco/jacoco.xml | head -5
+                                else
+                                    echo "⚠ WARNING: Coverage XML exists but shows 0% coverage (all covered=\"0\")"
+                                    echo "First few lines of XML:"
+                                    head -10 target/site/jacoco/jacoco.xml
+                                fi
                             else
                                 echo "⚠ Coverage XML report NOT found: target/site/jacoco/jacoco.xml"
                             fi

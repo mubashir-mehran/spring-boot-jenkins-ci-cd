@@ -19,10 +19,14 @@
         <!-- JaCoCo Properties -->
         <jacoco.version>0.8.11</jacoco.version>
         <sonar.java.coveragePlugin>jacoco</sonar.java.coveragePlugin>
-        <sonar.dynamicAnalysis>reuseReports</sonar.dynamicAnalysis>
-        <sonar.jacoco.reportPath>${project.basedir}/target/jacoco.exec</sonar.jacoco.reportPath>
-        <sonar.coverage.jacoco.xmlReportPaths>${project.basedir}/target/site/jacoco/jacoco.xml</sonar.coverage.jacoco.xmlReportPaths>
+        <!-- keep only modern Sonar property pointing to XML -->
+        <sonar.coverage.jacoco.xmlReportPaths>target/site/jacoco/jacoco.xml</sonar.coverage.jacoco.xmlReportPaths>
         <sonar.language>java</sonar.language>
+
+        <!-- PIT (Pitest) Properties -->
+        <pitest.version>1.15.0</pitest.version>
+        <pitest.mutationThreshold>70</pitest.mutationThreshold>
+        <pitest.coverageThreshold>70</pitest.coverageThreshold>
 
     </properties>
     <dependencies>
@@ -103,21 +107,36 @@
                 <version>${jacoco.version}</version>
                 <executions>
                     <execution>
-                        <id>jacoco-initialize</id>
+                        <id>prepare-agent</id>
+                        <phase>initialize</phase>
                         <goals>
                             <goal>prepare-agent</goal>
                         </goals>
-                        
+                        <configuration>
+                            <destFile>${project.build.directory}/jacoco.exec</destFile>
+                            <propertyName>argLine</propertyName>
+                        </configuration>
                     </execution>
+
                     <execution>
-                        <id>jacoco-report</id>
-                        <phase>test</phase>
+                        <id>report</id>
+                        <phase>verify</phase>
                         <goals>
                             <goal>report</goal>
                         </goals>
+                        <configuration>
+                            <dataFile>${project.build.directory}/jacoco.exec</dataFile>
+                            <outputDirectory>${project.build.directory}/site/jacoco</outputDirectory>
+                            <formats>
+                                <format>XML</format>
+                                <format>HTML</format>
+                            </formats>
+                        </configuration>
                     </execution>
+
                     <execution>
-                        <id>jacoco-check</id>
+                        <id>check</id>
+                        <phase>verify</phase>
                         <goals>
                             <goal>check</goal>
                         </goals>
@@ -137,6 +156,70 @@
                         </configuration>
                     </execution>
                 </executions>
+            </plugin>
+
+            <!-- PIT (Pitest) Mutation Testing Plugin -->
+            <plugin>
+                <groupId>org.pitest</groupId>
+                <artifactId>pitest-maven</artifactId>
+                <version>${pitest.version}</version>
+                <configuration>
+                    <!-- Target classes to mutate -->
+                    <targetClasses>
+                        <param>ma.projet.gestionprofesseurs.*</param>
+                    </targetClasses>
+                    <!-- Exclude classes from mutation testing -->
+                    <targetTests>
+                        <param>ma.projet.gestionprofesseurs.*Test</param>
+                        <param>ma.projet.gestionprofesseurs.*Tests</param>
+                    </targetTests>
+                    <!-- Exclude certain packages/classes -->
+                    <excludedClasses>
+                        <param>ma.projet.gestionprofesseurs.entities.*</param>
+                        <param>ma.projet.gestionprofesseurs.GestionProfesseursApplication</param>
+                    </excludedClasses>
+                    <!-- Mutation operators -->
+                    <mutators>
+                        <mutator>ALL</mutator>
+                    </mutators>
+                    <!-- Output formats -->
+                    <outputFormats>
+                        <outputFormat>HTML</outputFormat>
+                        <outputFormat>XML</outputFormat>
+                        <outputFormat>CSV</outputFormat>
+                    </outputFormats>
+                    <!-- Report directory -->
+                    <reportDir>${project.build.directory}/pit-reports</reportDir>
+                    <!-- Thresholds -->
+                    <mutationThreshold>${pitest.mutationThreshold}</mutationThreshold>
+                    <coverageThreshold>${pitest.coverageThreshold}</coverageThreshold>
+                    <!-- Timeout for tests -->
+                    <timeoutFactor>1.25</timeoutFactor>
+                    <timeoutConst>3000</timeoutConst>
+                    <!-- Threads for parallel execution -->
+                    <threads>4</threads>
+                    <!-- Use history to speed up incremental analysis -->
+                    <historyInputFile>${project.build.directory}/pitHistory.txt</historyInputFile>
+                    <historyOutputFile>${project.build.directory}/pitHistory.txt</historyOutputFile>
+                    <!-- Verbose output -->
+                    <verbose>true</verbose>
+                </configuration>
+                <executions>
+                    <execution>
+                        <id>pitest-mutation-testing</id>
+                        <phase>test</phase>
+                        <goals>
+                            <goal>mutationCoverage</goal>
+                        </goals>
+                    </execution>
+                </executions>
+                <dependencies>
+                    <dependency>
+                        <groupId>org.pitest</groupId>
+                        <artifactId>pitest-junit5-plugin</artifactId>
+                        <version>1.2.0</version>
+                    </dependency>
+                </dependencies>
             </plugin>
 
         </plugins>

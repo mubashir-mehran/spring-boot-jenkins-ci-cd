@@ -1,6 +1,6 @@
 # Spring Boot CI/CD Pipeline with Jenkins
 
-This repository contains a sample Spring Boot application integrated with a CI/CD pipeline using Jenkins. The pipeline automates the build, test, and deployment processes, including OWASP Dependency Check, SonarQube Analysis, Docker image creation, vulnerability scanning, and deployment to a staging environment.
+This repository contains a simple Spring Boot application integrated with a CI/CD pipeline using Jenkins. The pipeline automates the build, test, and deployment processes, including OWASP Dependency Check, SonarQube Analysis, Docker image creation, vulnerability scanning, Code Coverage and deployment to a staging environment.
 
 ## Technologies Used
 
@@ -12,6 +12,8 @@ This repository contains a sample Spring Boot application integrated with a CI/C
 - Docker (Containerization)
 - Trivy (Container security scanning)
 - Docker Compose (Container orchestration)
+- JaCoCO (Code Coverage)
+- PiTest (Mutation Test)
 
 ## Pipeline Stages
 The CI/CD pipeline follows these key stages:  
@@ -20,7 +22,7 @@ The CI/CD pipeline follows these key stages:
 
 1. **Code Checkout**
    - Clones repository from GitHub
-   - Branch: main
+   - Branch: main (Base Branch)
 
 2. **OWASP Dependency Check**
    - Scans all project dependencies
@@ -76,9 +78,10 @@ tools {
 ```
 
 3. Add credentials:
-   - GitHub credentials (if repository is private)
+   - GitHub credentials
    - DockerHub credentials
    - SonarQube token
+   - Docker Hub token
 
 ### SonarQube Setup
 

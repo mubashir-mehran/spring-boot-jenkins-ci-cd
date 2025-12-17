@@ -20,18 +20,18 @@ class SimpleUnitTest {
         
         Professeur professeur = new Professeur();
         professeur.setId(1);
-        professeur.setNom("Doe");
-        professeur.setPrenom("John");
-        professeur.setEmail("john.doe@example.com");
+        professeur.setNom("Ali");
+        professeur.setPrenom("Raza");
+        professeur.setEmail("ali.raza@example.com");
         professeur.setTelephone("123456789");
         professeur.setDateEmbauche(new Date());
         professeur.setSpecialite(specialite);
         
         assertNotNull(professeur);
         assertEquals(1, professeur.getId());
-        assertEquals("Doe", professeur.getNom());
-        assertEquals("John", professeur.getPrenom());
-        assertEquals("john.doe@example.com", professeur.getEmail());
+        assertEquals("Ali", professeur.getNom());
+        assertEquals("Raza", professeur.getPrenom());
+        assertEquals("ali.raza@example.com", professeur.getEmail());
         assertNotNull(professeur.getSpecialite());
     }
 
@@ -52,16 +52,16 @@ class SimpleUnitTest {
         Date date = new Date();
         
         professeur.setId(10);
-        professeur.setNom("Smith");
-        professeur.setPrenom("Jane");
-        professeur.setEmail("jane.smith@example.com");
+        professeur.setNom("Mubashir");
+        professeur.setPrenom("Ahmed");
+        professeur.setEmail("mubashir.ahmed@example.com");
         professeur.setTelephone("987654321");
         professeur.setDateEmbauche(date);
         
         assertEquals(10, professeur.getId());
-        assertEquals("Smith", professeur.getNom());
-        assertEquals("Jane", professeur.getPrenom());
-        assertEquals("jane.smith@example.com", professeur.getEmail());
+        assertEquals("Mubashir", professeur.getNom());
+        assertEquals("Ahmed", professeur.getPrenom());
+        assertEquals("mubashir.ahmed@example.com", professeur.getEmail());
         assertEquals("987654321", professeur.getTelephone());
         assertEquals(date, professeur.getDateEmbauche());
     }

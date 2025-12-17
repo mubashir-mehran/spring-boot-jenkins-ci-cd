@@ -43,9 +43,9 @@ class ProfesseurControllerTest {
 
         professeur = new Professeur();
         professeur.setId(1);
-        professeur.setNom("Doe");
-        professeur.setPrenom("John");
-        professeur.setEmail("john.doe@example.com");
+        professeur.setNom("Ali");
+        professeur.setPrenom("Raza");
+        professeur.setEmail("ali.raza@example.com");
         professeur.setTelephone("123456789");
         professeur.setDateEmbauche(new Date());
         professeur.setSpecialite(specialite);

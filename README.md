@@ -14,6 +14,8 @@ This repository contains a simple Spring Boot application integrated with a CI/C
 - Docker Compose (Container orchestration)
 - JaCoCO (Code Coverage)
 - PiTest (Mutation Test)
+- JML (Java Modeling Language) - Formal specifications for design-by-contract
+- OpenJML - Static verification tool for JML specifications
 
 ## Pipeline Stages
 The CI/CD pipeline follows these key stages:  
@@ -99,3 +101,23 @@ docker run -d --name sonarqube -p 9000:9000 sonarqube:latest
 
 1. Install Docker and Docker Compose
 2. Configure Docker Hub authentication
+
+## JML (Java Modeling Language) Implementation
+
+This application uses **JML (Java Modeling Language)** for formal specification and design-by-contract programming. JML specifications are embedded as special comments in the Java source code.
+
+### JML Features Implemented
+
+1. **Class Invariants** - Properties that must always hold for class instances
+   - Example: `id >= 0`, `nom != null` in `Professeur` class
+
+2. **Preconditions (`@requires`)** - Conditions that must be true before method execution
+   - Example: `requires o != null` for create/update methods
+
+3. **Postconditions (`@ensures`)** - Conditions that must be true after method execution
+   - Example: `ensures \result != null` for find methods
+
+4. **Quantified Expressions** - Used for collection operations
+   - Example: `(\forall int i; 0 <= i && i < \result.size(); ...)` for filtering methods
+
+

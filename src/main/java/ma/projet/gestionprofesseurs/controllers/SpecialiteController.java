@@ -15,11 +15,21 @@ public class SpecialiteController {
     @Autowired
     private SpecialiteService specialiteService;
 
+    /*@
+      @ ensures \result != null;
+      @*/
     @GetMapping
     public List<Specialite> findAllSpecialite() {
         return specialiteService.findAll();
     }
 
+    /*@
+      @ requires id >= 0;
+      @ ensures \result != null;
+      @ ensures (\result.getStatusCode() == HttpStatus.OK && 
+      @             \result.getBody() instanceof Specialite) ||
+      @         (\result.getStatusCode() == HttpStatus.BAD_REQUEST);
+      @*/
     @GetMapping("/{id}")
     public ResponseEntity<Object> findById(@PathVariable int id) {
         Specialite specialite = specialiteService.findById(id);
@@ -30,12 +40,25 @@ public class SpecialiteController {
         }
     }
 
+    /*@
+      @ requires specialite != null;
+      @ ensures \result != null;
+      @ ensures \result.getId() > 0;
+      @*/
     @PostMapping
     public Specialite createSpecialite(@RequestBody Specialite specialite) {
         specialite.setId(0);
         return specialiteService.create(specialite);
     }
 
+    /*@
+      @ requires id >= 0;
+      @ requires specialite != null;
+      @ ensures \result != null;
+      @ ensures (\result.getStatusCode() == HttpStatus.OK && 
+      @             \result.getBody() instanceof Specialite) ||
+      @         (\result.getStatusCode() == HttpStatus.BAD_REQUEST);
+      @*/
     @PutMapping("/{id}")
     public ResponseEntity<Object> updateSpecialite(@PathVariable int id, @RequestBody Specialite specialite) {
 
@@ -47,6 +70,12 @@ public class SpecialiteController {
         }
     }
 
+    /*@
+      @ requires id >= 0;
+      @ ensures \result != null;
+      @ ensures (\result.getStatusCode() == HttpStatus.OK) ||
+      @         (\result.getStatusCode() == HttpStatus.BAD_REQUEST);
+      @*/
     @DeleteMapping("/{id}")
     public ResponseEntity<Object> deleteSpecialite(@PathVariable int id) {
         Specialite specialite = specialiteService.findById(id);

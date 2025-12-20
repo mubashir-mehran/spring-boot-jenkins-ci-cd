@@ -13,11 +13,20 @@ public class SpecialiteService implements IDao<Specialite> {
     @Autowired
     private SpecialiteRepository specialiteRepository;
 
+    /*@
+      @ requires o != null;
+      @ ensures \result != null;
+      @ ensures \result.getId() == o.getId() || \result.getId() > 0;
+      @*/
     @Override
     public Specialite create(Specialite o) {
         return specialiteRepository.save(o);
     }
 
+    /*@
+      @ requires o != null;
+      @ ensures \result == true || \result == false;
+      @*/
     @Override
     public boolean delete(Specialite o) {
         try {
@@ -29,16 +38,29 @@ public class SpecialiteService implements IDao<Specialite> {
         }
     }
 
+    /*@
+      @ requires o != null;
+      @ requires o.getId() > 0;
+      @ ensures \result != null;
+      @ ensures \result.getId() == o.getId();
+      @*/
     @Override
     public Specialite update(Specialite o) {
         return specialiteRepository.save(o);
     }
 
+    /*@
+      @ ensures \result != null;
+      @*/
     @Override
     public List<Specialite> findAll() {
         return specialiteRepository.findAll();
     }
 
+    /*@
+      @ requires id >= 0;
+      @ ensures \result == null || \result.getId() == id;
+      @*/
     @Override
     public Specialite findById(int id) {
         return specialiteRepository.findById(id).orElse(null);

@@ -22,11 +22,21 @@ public class ProfesseurController {
     @Autowired
     private SpecialiteRepository specialiteRepository;
 
+    /*@
+      @ ensures \result != null;
+      @*/
     @GetMapping
     public List<Professeur> findAllProfesseur() {
         return professeurService.findAll();
     }
 
+    /*@
+      @ requires id >= 0;
+      @ ensures \result != null;
+      @ ensures (\result.getStatusCode() == HttpStatus.OK && 
+      @             \result.getBody() instanceof Professeur) ||
+      @         (\result.getStatusCode() == HttpStatus.BAD_REQUEST);
+      @*/
     @GetMapping("/{id}")
     public ResponseEntity<Object> findById(@PathVariable int id) {
         Professeur professeur = professeurService.findById(id);
@@ -37,12 +47,25 @@ public class ProfesseurController {
         }
     }
 
+    /*@
+      @ requires professeur != null;
+      @ ensures \result != null;
+      @ ensures \result.getId() > 0;
+      @*/
     @PostMapping
     public Professeur createProfesseur(@RequestBody Professeur professeur) {
         professeur.setId(0);
         return professeurService.create(professeur);
     }
 
+    /*@
+      @ requires id >= 0;
+      @ requires professeur != null;
+      @ ensures \result != null;
+      @ ensures (\result.getStatusCode() == HttpStatus.OK && 
+      @             \result.getBody() instanceof Professeur) ||
+      @         (\result.getStatusCode() == HttpStatus.BAD_REQUEST);
+      @*/
     @PutMapping("/{id}")
     public ResponseEntity<Object> updateProfesseur(@PathVariable int id, @RequestBody Professeur professeur) {
 
@@ -54,6 +77,12 @@ public class ProfesseurController {
         }
     }
 
+    /*@
+      @ requires id >= 0;
+      @ ensures \result != null;
+      @ ensures (\result.getStatusCode() == HttpStatus.OK) ||
+      @         (\result.getStatusCode() == HttpStatus.BAD_REQUEST);
+      @*/
     @DeleteMapping("/{id}")
     public ResponseEntity<Object> deleteProfesseur(@PathVariable int id) {
         Professeur professeur = professeurService.findById(id);
@@ -65,6 +94,12 @@ public class ProfesseurController {
         }
     }
 
+    /*@
+      @ requires id != null && id >= 0;
+      @ ensures \result != null;
+      @ ensures (\forall int i; 0 <= i && i < \result.size(); 
+      @             \result.get(i).getSpecialite().getId() == id);
+      @*/
     @GetMapping("/specialite/{id}")
     public List<Professeur> findProfesseurBySpecialite(@PathVariable Integer id) {
         Specialite specialite = new Specialite();
@@ -72,6 +107,14 @@ public class ProfesseurController {
         return professeurService.findBySpecialite(specialite);
     }
 
+    /*@
+      @ requires dateDebut != null;
+      @ requires dateFin != null;
+      @ ensures \result != null;
+      @ ensures (\forall int i; 0 <= i && i < \result.size();
+      @             dateDebut.compareTo(\result.get(i).getDateEmbauche()) <= 0 &&
+      @             \result.get(i).getDateEmbauche().compareTo(dateFin) <= 0);
+      @*/
     @GetMapping("/filterByDate")
     public List<Professeur> findByDateEmbaucheBetween(@RequestParam @DateTimeFormat(pattern = "yyyy-MM-dd") Date dateDebut, @RequestParam @DateTimeFormat(pattern = "yyyy-MM-dd") Date dateFin) {
         return professeurService.findByDateEmbaucheBetween(dateDebut, dateFin);

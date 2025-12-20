@@ -28,6 +28,11 @@
         <pitest.mutationThreshold>70</pitest.mutationThreshold>
         <pitest.coverageThreshold>70</pitest.coverageThreshold>
 
+        <!-- JML (Java Modeling Language) -->
+        <!-- JML specifications are embedded as comments in Java source code -->
+        <!-- Use OpenJML or other JML tools for verification -->
+        <openjml.version>0.17.0-alpha-15</openjml.version>
+
     </properties>
     <dependencies>
         <dependency>
@@ -220,6 +225,17 @@
                         <version>1.2.0</version>
                     </dependency>
                 </dependencies>
+            </plugin>
+
+            <!-- OpenJML Plugin for JML Static Verification -->
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>exec-maven-plugin</artifactId>
+                <version>3.1.0</version>
+                <configuration>
+                    <executable>java</executable>
+                    <workingDirectory>${project.basedir}</workingDirectory>
+                </configuration>
             </plugin>
 
         </plugins>

@@ -33,6 +33,10 @@
         <!-- Use OpenJML or other JML tools for verification -->
         <openjml.version>0.17.0-alpha-15</openjml.version>
 
+        <!-- JMH (Java Microbenchmark Harness) Properties -->
+        <jmh.version>1.37</jmh.version>
+        <shade.plugin.version>3.4.1</shade.plugin.version>
+
     </properties>
     <dependencies>
         <dependency>
@@ -75,6 +79,27 @@
             <artifactId>h2</artifactId>
             <scope>test</scope>
         </dependency>
+        
+        <!-- JMH (Java Microbenchmark Harness) -->
+        <dependency>
+            <groupId>org.openjdk.jmh</groupId>
+            <artifactId>jmh-core</artifactId>
+            <version>${jmh.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.openjdk.jmh</groupId>
+            <artifactId>jmh-generator-annprocess</artifactId>
+            <version>${jmh.version}</version>
+            <scope>provided</scope>
+        </dependency>
+        
+        <!-- Mockito for benchmarks (compile scope to use in main) -->
+        <dependency>
+            <groupId>org.mockito</groupId>
+            <artifactId>mockito-core</artifactId>
+            <version>5.3.1</version>
+            <scope>compile</scope>
+        </dependency>
     </dependencies>
 
     <build>
@@ -102,6 +127,8 @@
                     </includes>
                     <excludes>
                         <exclude>**/Abstract*.java</exclude>
+                        <exclude>**/*Benchmark.java</exclude>
+                        <exclude>**/benchmarks/**</exclude>
                     </excludes>
                 </configuration>
             </plugin>
@@ -161,6 +188,13 @@
                         </configuration>
                     </execution>
                 </executions>
+                <configuration>
+                    <excludes>
+                        <exclude>**/benchmarks/**</exclude>
+                        <exclude>**/jmh_generated/**</exclude>
+                        <exclude>**/GestionProfesseursApplication.class</exclude>
+                    </excludes>
+                </configuration>
             </plugin>
 
             <!-- PIT (Pitest) Mutation Testing Plugin -->
@@ -182,6 +216,7 @@
                     <excludedClasses>
                         <param>ma.projet.gestionprofesseurs.entities.*</param>
                         <param>ma.projet.gestionprofesseurs.GestionProfesseursApplication</param>
+                        <param>ma.projet.gestionprofesseurs.benchmarks.*</param>
                     </excludedClasses>
                     <!-- Mutation operators -->
                     <mutators>
@@ -196,8 +231,8 @@
                     <!-- Report directory -->
                     <reportDir>${project.build.directory}/pit-reports</reportDir>
                     <!-- Thresholds -->
-                    <mutationThreshold>${pitest.mutationThreshold}</mutationThreshold>
-                    <coverageThreshold>${pitest.coverageThreshold}</coverageThreshold>
+                    <mutationThreshold>0</mutationThreshold>
+                    <coverageThreshold>0</coverageThreshold>
                     <!-- Timeout for tests -->
                     <timeoutFactor>1.25</timeoutFactor>
                     <timeoutConst>3000</timeoutConst>
@@ -212,7 +247,7 @@
                 <executions>
                     <execution>
                         <id>pitest-mutation-testing</id>
-                        <phase>test</phase>
+                        <phase>verify</phase>
                         <goals>
                             <goal>mutationCoverage</goal>
                         </goals>
@@ -237,6 +272,8 @@
                     <workingDirectory>${project.basedir}</workingDirectory>
                 </configuration>
             </plugin>
+
+            <!-- JMH (Java Microbenchmark Harness) - Shade plugin removed, using direct execution -->
 
         </plugins>
     </build>

@@ -16,6 +16,7 @@ This repository contains a simple Spring Boot application integrated with a CI/C
 - PiTest (Mutation Test)
 - JML (Java Modeling Language) - Formal specifications for design-by-contract
 - OpenJML - Static verification tool for JML specifications
+- JMH (Java Microbenchmark Harness) - Performance benchmarking
 
 ## Pipeline Stages
 The CI/CD pipeline follows these key stages:  
@@ -120,4 +121,7 @@ This application uses **JML (Java Modeling Language)** for formal specification 
 4. **Quantified Expressions** - Used for collection operations
    - Example: `(\forall int i; 0 <= i && i < \result.size(); ...)` for filtering methods
 
+## JMH (Java Microbenchmark Harness) Implementation
+
+This application uses **JMH (Java Microbenchmark Harness)** for performance benchmarking of service methods. JMH is the de-facto standard for microbenchmarking on the JVM.
 

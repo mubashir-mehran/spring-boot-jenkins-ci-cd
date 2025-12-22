@@ -54,7 +54,7 @@ class ProfesseurServiceTest {
 
         assertNotNull(result);
         assertEquals(1, result.getId());
-        assertEquals("Doe", result.getNom());
+        assertEquals("Ali", result.getNom());
         verify(professeurRepository, times(1)).save(professeur);
     }
 
